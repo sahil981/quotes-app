@@ -1,20 +1,27 @@
 const rp = require('request-promise');
 const cheerio = require('cheerio');
 const express = require('express')
+var {mongoose} = require('./db/mongoose');
+var bodyParser = require('body-parser');
+var {QuoteModel} = require('./models/quote');
 
 const app = express();
 
-const options = {
-    uri: `https://www.goodreads.com/quotes/tag/inspiration?page=2`,
+app.use(bodyParser.json());
+
+app.get('/', function (req, res) {
+  
+  let category = req.query.category;
+  let page_no = req.query.page
+
+  const options = {
+    uri: `https://www.goodreads.com/quotes/tag/${category}?page=${page_no}`,
     transform: function (body) {
       return cheerio.load(body);
     }
   };
-
-
-  app.get('/', function (req, res) {
     var quotes = [];
-    var quoteData = { 'quote' : '' , 'author' : '', 'category' : 'love'};
+    var quoteData = { 'quote' : '' , 'author' : '', 'category' : category};
     var result = [];
 
     rp(options)
@@ -25,15 +32,28 @@ const options = {
             });
             console.log(quotes.length);
             quotes.forEach((data) => {
-                quoteData = { 'quote' : '' , 'author' : ''};
                 let quote = data.split('―')[0];
                 let author = data.split('―')[1];
+                quoteData = { 'quote' : '' , 'author' : ''};
+
+                var quoteModel = new QuoteModel({
+                  quote : quote,
+                  author : author,
+                  category : category
+                });
+
+                quoteModel.save().then((doc)=>{
+                  console.log('success');
+                }, (err)=>{
+                    res.status(400).send(err);
+                });
+              
                 quoteData.quote = quote;
                 quoteData.author = author;
-                quoteData.category = 'love';
+                quoteData.category = category;
                 result.push(quoteData);
             });
-
+              
             res.send((result));
         })
         .catch((err) => {
@@ -43,6 +63,16 @@ const options = {
      
 
   });
+
+  app.get('/quotes', (req,res)=>{
+    QuoteModel.find().then((quote)=>{
+        res.send({
+            quote
+        });
+    }, (err)=>{
+        res.status(400).send(err);
+    });
+});
 
 
 
