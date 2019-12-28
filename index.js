@@ -4,6 +4,9 @@ const express = require('express')
 var {mongoose} = require('./db/mongoose');
 var bodyParser = require('body-parser');
 var {QuoteModel} = require('./models/quote');
+var {Scrapper} = require('./scrappers/scrapping');
+
+
 
 const app = express();
 

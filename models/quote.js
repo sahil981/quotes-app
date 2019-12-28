@@ -21,4 +21,9 @@ var QuoteModel = mongoose.model('QuoteModel',{
     }
 });
 
-module.exports = {QuoteModel};
+var QuoteData = function () {
+    return {quote: '', author: '', category: ''}
+};
+
+
+module.exports = {QuoteModel,QuoteData};
